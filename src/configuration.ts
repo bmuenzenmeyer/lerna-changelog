@@ -13,6 +13,8 @@ export interface Configuration {
   cacheDir?: string;
   nextVersion: string | undefined;
   nextVersionFromMetadata?: boolean;
+  gitUrl?: string;
+  gitAPIUrl?: string
 }
 
 export interface ConfigLoaderOptions {
@@ -31,10 +33,10 @@ export function fromPath(rootPath: string, options: ConfigLoaderOptions = {}): C
   let config = fromPackageConfig(rootPath) || fromLernaConfig(rootPath) || {};
 
   // Step 2: fill partial config with defaults
-  let { repo, nextVersion, labels, cacheDir, ignoreCommitters } = config;
+  let { repo, nextVersion, labels, cacheDir, ignoreCommitters, gitUrl, gitAPIUrl } = config;
 
   if (!repo) {
-    repo = findRepo(rootPath);
+    repo = findRepo(rootPath, config);
     if (!repo) {
       throw new ConfigurationError('Could not infer "repo" from the "package.json" file.');
     }
@@ -76,6 +78,8 @@ export function fromPath(rootPath: string, options: ConfigLoaderOptions = {}): C
     labels,
     ignoreCommitters,
     cacheDir,
+    gitUrl,
+    gitAPIUrl
   };
 }
 
@@ -93,7 +97,7 @@ function fromPackageConfig(rootPath: string): Partial<Configuration> | undefined
   }
 }
 
-function findRepo(rootPath: string): string | undefined {
+function findRepo(rootPath: string, config: Partial<Configuration>): string | undefined {
   const pkgPath = path.join(rootPath, "package.json");
   if (!fs.existsSync(pkgPath)) {
     return;
@@ -104,7 +108,7 @@ function findRepo(rootPath: string): string | undefined {
     return;
   }
 
-  return findRepoFromPkg(pkg);
+  return findRepoFromPkg(pkg, config);
 }
 
 function findNextVersion(rootPath: string): string | undefined {
@@ -117,10 +121,15 @@ function findNextVersion(rootPath: string): string | undefined {
   return pkg.version ? `v${pkg.version}` : lerna.version ? `v${lerna.version}` : undefined;
 }
 
-export function findRepoFromPkg(pkg: any): string | undefined {
+export function findRepoFromPkg(pkg: any, config: Partial<Configuration>): string | undefined {
   const url = pkg.repository.url || pkg.repository;
   const normalized = normalize(url).url;
-  const match = normalized.match(/github\.com[:/]([^./]+\/[^./]+)(?:\.git)?/);
+
+  const repoRegexPattern = `${config.gitUrl.replace(/\/\s*$/, "")}[:/]([^./]+\/[^./]+)(?:\.git)?`
+  const repoRegex = new RegExp(repoRegexPattern, "g");
+
+  const match = repoRegex.exec(normalized)
+
   if (!match) {
     return;
   }

@@ -89,6 +89,12 @@ for the GitHub API with the `repo` scope for private repositories or just
 `public_repo` scope for public repositories.
 
 
+### Enterprise Authentication
+
+```
+export GITHUB_ENTERPRISE_AUTH="..."
+```
+
 Configuration
 ------------------------------------------------------------------------------
 
@@ -111,6 +117,10 @@ The supported options are:
 
 - `repo`: Your "org/repo" on GitHub
   (automatically inferred from the `package.json` file)
+
+- `gitUrl`: Your Enterprise Github URL with trailing `/` (e.g: `https://git.privatecorp.com/`)
+
+- `gitAPIUrl`: Your Enterprise Github API URL with trailing `/` (e.g: `https://git.privatecorp.com/api/v3/`)
 
 - `nextVersion`: Title for unreleased commits
   (e.g. `Unreleased`)

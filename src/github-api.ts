@@ -28,14 +28,20 @@ export interface Options {
   repo: string;
   rootPath: string;
   cacheDir?: string;
+  gitAPIUrl?: string;
+  gitUrl?: string;
 }
 
 export default class GithubAPI {
   private cacheDir: string | undefined;
   private auth: string;
+  private gitAPIUrl: string;
+  private gitUrl: string
 
   constructor(config: Options) {
     this.cacheDir = config.cacheDir && path.join(config.rootPath, config.cacheDir, "github");
+    this.gitAPIUrl = config.gitAPIUrl || 'https://api.github.com/'
+    this.gitUrl = config.gitUrl || 'https://github.com/'
     this.auth = this.getAuthToken();
     if (!this.auth) {
       throw new ConfigurationError("Must provide GITHUB_AUTH");
@@ -43,15 +49,15 @@ export default class GithubAPI {
   }
 
   public getBaseIssueUrl(repo: string): string {
-    return `https://github.com/${repo}/issues/`;
+    return `${this.gitUrl}${repo}/issues/`;
   }
 
   public async getIssueData(repo: string, issue: string): Promise<GitHubIssueResponse> {
-    return this._fetch(`https://api.github.com/repos/${repo}/issues/${issue}`);
+    return this._fetch(`${this.gitAPIUrl}repos/${repo}/issues/${issue}`);
   }
 
   public async getUserData(login: string): Promise<GitHubUserResponse> {
-    return this._fetch(`https://api.github.com/users/${login}`);
+    return this._fetch(`${this.gitAPIUrl}users/${login}`);
   }
 
   private async _fetch(url: string): Promise<any> {
@@ -65,6 +71,6 @@ export default class GithubAPI {
   }
 
   private getAuthToken(): string {
-    return process.env.GITHUB_AUTH;
+    return this.gitAPIUrl ? process.env.GITHUB_ENTERPRISE_AUTH : process.env.GITHUB_AUTH;
   }
 }
